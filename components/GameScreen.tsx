@@ -97,6 +97,11 @@ export default function GameScreen({
       : 'Waiting'
     : 'Your turn';
 
+  const recentMoves = state.moveHistory
+    .map((move, index) => ({ move, index }))
+    .slice(-2)
+    .reverse();
+
   const formatMove = (move: Move, index: number) => {
     const col = String.fromCharCode(65 + move.position.col);
     const row = move.position.row + 1;
@@ -302,8 +307,8 @@ export default function GameScreen({
                     <ClockIcon className="h-5 w-5 text-amber-100/65" />
                   </span>
                   <span>
-                    <span className="block text-sm font-bold">Move history</span>
-                    <span className="text-xs text-text-light/40">Tap a move to preview the board</span>
+                    <span className="block text-sm font-bold">Recent moves</span>
+                    <span className="text-xs text-text-light/40">Tap one to preview the board</span>
                   </span>
                 </span>
                 {isPreviewing && (
@@ -316,8 +321,8 @@ export default function GameScreen({
                 )}
               </div>
               <div className="mx-4 h-px bg-white/[0.07]" />
-              <div className="max-h-48 overflow-y-auto py-1">
-                {state.moveHistory.map((move, index) => {
+              <div className="py-1">
+                {recentMoves.map(({ move, index }) => {
                   const active = previewMoveIndex === index;
                   return (
                     <button
