@@ -509,6 +509,8 @@ export function useOnlineGame() {
     error,
     myPlayer,
     opponentId,
+    gameId: gameUUID,
+    playerId: typeof window === 'undefined' ? '' : getPlayerId(),
     state: gameDoc?.state ?? localState,
     globalStats: globalStats ?? emptyStats(),
     debug: {

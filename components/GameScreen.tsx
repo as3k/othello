@@ -8,11 +8,28 @@ import {
   ChevronRightIcon,
   ClockIcon,
   InformationCircleIcon,
+  MicrophoneIcon,
+  PhoneXMarkIcon,
+  SpeakerXMarkIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import type { GameState, Move, Player, Position } from '@/lib/game/types';
 import { countDisks } from '@/lib/game/board';
 import Board from './Board';
+
+interface VoiceControls {
+  available: boolean;
+  status: 'off' | 'requested' | 'connecting' | 'connected' | 'failed';
+  incoming: boolean;
+  muted: boolean;
+  error: string | null;
+  localLevel: number;
+  remoteLevel: number;
+  start: () => void;
+  accept: () => void;
+  toggleMute: () => void;
+  hangUp: () => void;
+}
 
 interface GameScreenProps {
   mode: 'local' | 'online';
@@ -28,6 +45,7 @@ interface GameScreenProps {
   currentPlayer: Player | null;
   gameOver: boolean;
   statusText?: string | null;
+  voice?: VoiceControls;
   debugNode?: React.ReactNode;
   onCellClick: (pos: Position) => void;
   onRestart: () => void;
@@ -48,6 +66,7 @@ export default function GameScreen({
   currentPlayer,
   gameOver,
   statusText,
+  voice,
   debugNode,
   onCellClick,
   onRestart,
@@ -97,6 +116,8 @@ export default function GameScreen({
       : 'Waiting'
     : 'Your turn';
 
+  const voiceActive = voice && voice.status !== 'off';
+
   const recentMoves = state.moveHistory
     .map((move, index) => ({ move, index }))
     .slice(-2)
@@ -137,6 +158,28 @@ export default function GameScreen({
         currentPlayer={isPreviewing ? null : currentPlayer}
         flippingCells={flippingCells}
       />
+
+      {voiceActive && (
+        <div
+          className="absolute left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/35 px-3 py-2 text-text-light/70 backdrop-blur-sm ring-1 ring-white/10"
+          style={{ top: 'calc(50% + 46vmin + 2.7rem)' }}
+        >
+          {[voice.localLevel, voice.remoteLevel].map((level, side) => (
+            <div key={side} className="flex items-end gap-0.5">
+              {[0.35, 0.65, 1, 0.55].map((scale, i) => (
+                <span
+                  key={i}
+                  className={`w-1 rounded-full ${side === 0 ? 'bg-emerald-200/70' : 'bg-sky-200/70'}`}
+                  style={{ height: `${5 + Math.max(0.08, level) * scale * 18}px` }}
+                />
+              ))}
+            </div>
+          ))}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-text-light/40">
+            {voice.status === 'connected' ? (voice.muted ? 'Muted' : 'Voice') : voice.incoming ? 'Join?' : 'Voice…'}
+          </span>
+        </div>
+      )}
 
       {!gameOver && (
         <div
@@ -279,6 +322,65 @@ export default function GameScreen({
                 />
               </span>
             </button>
+
+            {voice && (
+              <>
+                <div className="mx-4 h-px bg-white/[0.07]" />
+                <div className="px-4 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="flex items-center gap-3">
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-sky-300/10 ring-1 ring-sky-200/10">
+                        <MicrophoneIcon className="h-5 w-5 text-sky-100/65" />
+                      </span>
+                      <span>
+                        <span className="block text-sm font-bold">Voice chat</span>
+                        <span className="text-xs text-text-light/40">
+                          {voice.error
+                            ? voice.error
+                            : voice.status === 'connected'
+                            ? 'Connected'
+                            : voice.incoming
+                            ? 'Someone wants to talk'
+                            : voice.available
+                            ? 'Talk while you play'
+                            : 'Available online'}
+                        </span>
+                      </span>
+                    </span>
+                    {voice.status === 'connected' ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={voice.toggleMute}
+                          className={`grid h-9 w-9 place-items-center rounded-full ring-1 active:scale-95 ${
+                            voice.muted
+                              ? 'bg-amber-300/20 text-amber-100 ring-amber-200/15'
+                              : 'bg-white/[0.08] text-text-light/65 ring-white/10'
+                          }`}
+                          aria-label={voice.muted ? 'Unmute' : 'Mute'}
+                        >
+                          {voice.muted ? <SpeakerXMarkIcon className="h-5 w-5" /> : <MicrophoneIcon className="h-5 w-5" />}
+                        </button>
+                        <button
+                          onClick={voice.hangUp}
+                          className="grid h-9 w-9 place-items-center rounded-full bg-red-500/20 text-red-100 ring-1 ring-red-200/15 active:scale-95"
+                          aria-label="Hang up"
+                        >
+                          <PhoneXMarkIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={voice.incoming ? voice.accept : voice.start}
+                        disabled={!voice.available || voice.status === 'connecting' || voice.status === 'requested'}
+                        className="rounded-full bg-sky-300/14 px-3 py-1.5 text-[11px] font-black text-sky-100 ring-1 ring-sky-200/10 active:bg-sky-300/20 disabled:opacity-40"
+                      >
+                        {voice.incoming ? 'Join' : voice.status === 'connecting' || voice.status === 'requested' ? 'Starting' : 'Start'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="mx-4 h-px bg-white/[0.07]" />
 

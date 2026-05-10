@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Position, Move } from '@/lib/game/types';
 import { useOnlineGame, db } from '@/lib/game/online';
+import { useVoiceChat } from '@/lib/voice/useVoiceChat';
 import GameScreen from '@/components/GameScreen';
 import { emptyStats } from '@/lib/game/stats';
 
@@ -17,6 +18,9 @@ export default function OnlinePage() {
     roomCode,
     error,
     myPlayer,
+    opponentId,
+    gameId,
+    playerId,
     state,
     globalStats,
     createRoom,
@@ -34,6 +38,12 @@ export default function OnlinePage() {
   const connStatus: string = (db as any).useConnectionStatus?.() ?? 'connecting';
   const [connTimeout, setConnTimeout] = useState(false);
   const showDebug = process.env.NODE_ENV === 'development';
+  const voice = useVoiceChat({
+    gameId,
+    playerId,
+    opponentId,
+    enabled: phase === 'playing' || phase === 'finished',
+  });
 
   useEffect(() => {
     if (connStatus === 'connecting' || connStatus === 'opening') {
@@ -255,6 +265,7 @@ export default function OnlinePage() {
       currentPlayer={gameOver ? null : state.currentPlayer}
       gameOver={gameOver}
       statusText={error}
+      voice={voice}
       onCellClick={handleCellClick}
       onRestart={restart}
       onLeave={leave}
