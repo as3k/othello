@@ -1,65 +1,84 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { GlobeAltIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import StatsDisplay from '@/components/StatsDisplay';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="fixed inset-0 bg-board-bg flex flex-col items-center justify-center select-none px-6">
+      <div
+        className="absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(0deg, transparent, transparent calc(100%/8 - 1px), #D8E5DE calc(100%/8 - 1px), #D8E5DE calc(100%/8)), ' +
+            'repeating-linear-gradient(90deg, transparent, transparent calc(100%/8 - 1px), #D8E5DE calc(100%/8 - 1px), #D8E5DE calc(100%/8))',
+          backgroundSize: 'min(92vmin, 92vh) min(92vmin, 92vh)',
+          backgroundPosition: 'center center',
+        }}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(216,229,222,0.08),transparent_45%)]" />
+
+      <div className="relative flex w-full max-w-sm flex-col items-center gap-7">
+        <div className="rounded-[1.4rem] bg-black/18 p-3 shadow-[0_24px_80px_rgba(0,0,0,0.35)] ring-1 ring-white/10 backdrop-blur-sm animate-bob">
+          <div className="rounded-xl bg-board-border p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <div className="grid grid-cols-2 gap-px bg-board-border">
+              <div className="w-11 h-11 bg-cell-bg rounded-md flex items-center justify-center">
+                <div className="w-[74%] h-[74%] rounded-full bg-white shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)]" />
+              </div>
+              <div className="w-11 h-11 bg-cell-bg rounded-md flex items-center justify-center">
+                <div className="w-[74%] h-[74%] rounded-full bg-gray-900 shadow-[inset_0_2px_5px_rgba(255,255,255,0.25)]" />
+              </div>
+              <div className="w-11 h-11 bg-cell-bg rounded-md flex items-center justify-center">
+                <div className="w-[74%] h-[74%] rounded-full bg-gray-900 shadow-[inset_0_2px_5px_rgba(255,255,255,0.25)]" />
+              </div>
+              <div className="w-11 h-11 bg-cell-bg rounded-md flex items-center justify-center">
+                <div className="w-[74%] h-[74%] rounded-full bg-white shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-emerald-100/35">
+            Reversi on the web
+          </p>
+          <h1 className="text-5xl sm:text-7xl font-black tracking-[0.10em] text-text-light drop-shadow-[0_8px_34px_rgba(0,0,0,0.55)]">
+            OTHELLO
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-text-light/56 sm:text-base">
+            Outflank, flip, and own the board. Play pass-and-play or challenge someone online.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="flex w-full flex-col gap-3">
+          <Link
+            href="/online"
+            className="group flex items-center justify-between rounded-[1.35rem] bg-cell-bg px-5 py-4 text-text-light shadow-[0_14px_40px_rgba(0,0,0,0.28)] ring-1 ring-emerald-200/15 transition active:scale-[0.98] active:brightness-95"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-emerald-100/45">Multiplayer</span>
+              <span className="mt-0.5 block text-lg font-black">Play online</span>
+            </span>
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-black/18 ring-1 ring-white/10">
+              <GlobeAltIcon className="h-5 w-5 text-text-light/75" />
+            </span>
+          </Link>
+
+          <Link
+            href="/othello"
+            className="group flex items-center justify-between rounded-[1.35rem] bg-white/[0.08] px-5 py-4 text-text-light shadow-[0_10px_30px_rgba(0,0,0,0.16)] ring-1 ring-white/10 transition active:scale-[0.98] active:bg-white/[0.12]"
           >
-            Documentation
-          </a>
+            <span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-text-light/32">Same device</span>
+              <span className="mt-0.5 block text-base font-bold text-text-light/75">Local play</span>
+            </span>
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-white/[0.08] ring-1 ring-white/10">
+              <UserGroupIcon className="h-5 w-5 text-text-light/55" />
+            </span>
+          </Link>
         </div>
-      </main>
-    </div>
+
+        <StatsDisplay />
+      </div>
+    </main>
   );
 }

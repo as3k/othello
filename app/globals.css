@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #133429;
+  --foreground: #D8E5DE;
+}
+
+/* ── 360° keyframes — one per axis ── */
+
+@keyframes flip-x {
+  0%   { transform: perspective(350px) rotateX(0deg);   filter: brightness(1); }
+  25%  { transform: perspective(350px) rotateX(85deg);  filter: brightness(1.6); }
+  35%  { transform: perspective(350px) rotateX(95deg);  filter: brightness(1.7); }
+  45%  { transform: perspective(350px) rotateX(180deg); filter: brightness(1.4); }
+  65%  { transform: perspective(350px) rotateX(265deg); filter: brightness(1.6); }
+  70%  { transform: perspective(350px) rotateX(280deg); filter: brightness(1.7); }
+  85%  { transform: perspective(350px) rotateX(340deg); filter: brightness(1.3); }
+  100% { transform: perspective(350px) rotateX(360deg); filter: brightness(1); }
+}
+
+@keyframes flip-y {
+  0%   { transform: perspective(350px) rotateY(0deg);   filter: brightness(1); }
+  25%  { transform: perspective(350px) rotateY(85deg);  filter: brightness(1.6); }
+  35%  { transform: perspective(350px) rotateY(95deg);  filter: brightness(1.7); }
+  45%  { transform: perspective(350px) rotateY(180deg); filter: brightness(1.4); }
+  65%  { transform: perspective(350px) rotateY(265deg); filter: brightness(1.6); }
+  70%  { transform: perspective(350px) rotateY(280deg); filter: brightness(1.7); }
+  85%  { transform: perspective(350px) rotateY(340deg); filter: brightness(1.3); }
+  100% { transform: perspective(350px) rotateY(360deg); filter: brightness(1); }
+}
+
+@keyframes flip-d {
+  0%   { transform: perspective(350px) rotateX(0deg) rotateY(0deg);   filter: brightness(1); }
+  25%  { transform: perspective(350px) rotateX(85deg) rotateY(85deg); filter: brightness(1.6); }
+  35%  { transform: perspective(350px) rotateX(95deg) rotateY(95deg); filter: brightness(1.7); }
+  45%  { transform: perspective(350px) rotateX(180deg) rotateY(180deg); filter: brightness(1.4); }
+  65%  { transform: perspective(350px) rotateX(265deg) rotateY(265deg); filter: brightness(1.6); }
+  70%  { transform: perspective(350px) rotateX(280deg) rotateY(280deg); filter: brightness(1.7); }
+  85%  { transform: perspective(350px) rotateX(340deg) rotateY(340deg); filter: brightness(1.3); }
+  100% { transform: perspective(350px) rotateX(360deg) rotateY(360deg); filter: brightness(1); }
+}
+
+/* ── Home page hero bob ── */
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes menu-backdrop-in {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(12px); }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-board-bg: #133429;
+  --color-board-border: #0B4E3C;
+  --color-cell-bg: #1E6B53;
+  --color-cell-hover: #218060;
+  --color-text-light: #D8E5DE;
+  --animate-bob: bob 3s ease-in-out infinite;
+  --animate-menu-backdrop-in: menu-backdrop-in 260ms ease-out both;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
+html, body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  overflow: hidden;
 }
