@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, useCallback, useState, useRef } from 'react';
 import { init, tx, id } from '@instantdb/react';
-import type { GameState, Position, Player } from './types';
+import type { GameState, Position, Player, BoardSize } from './types';
 import { gameReducer, createInitialState } from './game-state';
 import { isValidMove, placeDisk, countDisks, getGameStatus, getValidMoves } from './board';
 import { emptyStats, statsFromGameEnd, STATS_ID, type GlobalStats } from './stats';
@@ -125,7 +125,7 @@ export function useOnlineGame() {
   const [opponentId, setOpponentId] = useState<string | null>(null);
   const [gameUUID, setGameUUID] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string>('init');
-  const [localState, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [localState, dispatch] = useReducer(gameReducer, null, () => createInitialState(8));
 
   // Subscribe to the game doc by UUID
   const query = gameUUID
@@ -218,7 +218,7 @@ export function useOnlineGame() {
 
   // ── Create room ──
 
-  const createRoom = useCallback(async () => {
+  const createRoom = useCallback(async (boardSize: BoardSize = 8) => {
     setPhase('creating');
     const uuid = id();
     const pid = getPlayerId();
@@ -226,10 +226,11 @@ export function useOnlineGame() {
     try {
       const code = await generateUniqueRoomCode();
       console.log('[createRoom] code:', code, 'uuid:', uuid, 'pid:', pid);
+      const initialState = createInitialState(boardSize);
       await (db as any).transact(
         tx.games[uuid].update({
           code,
-          state: createInitialState(),
+          state: initialState,
           player1: pid,
           status: 'waiting',
         })
@@ -471,7 +472,7 @@ export function useOnlineGame() {
       whitePlayer = p1Black ? p2 : p1;
     }
 
-    const newState = createInitialState();
+    const newState = createInitialState(current.state.boardSize);
     dispatch({ type: 'SET_STATE', state: newState });
     (db as any).transact(
       tx.games[current.id].merge({

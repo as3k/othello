@@ -6,9 +6,10 @@ import {
   ArrowRightOnRectangleIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
-import type { Position, Move } from '@/lib/game/types';
+import type { Position, Move, BoardSize } from '@/lib/game/types';
 import { useOnlineGame, db } from '@/lib/game/online';
 import GameScreen from '@/components/GameScreen';
+import SizePicker from '@/components/SizePicker';
 import { emptyStats } from '@/lib/game/stats';
 
 export default function OnlinePage() {
@@ -28,6 +29,7 @@ export default function OnlinePage() {
     debug,
   } = useOnlineGame();
 
+  const [selectedSize, setSelectedSize] = useState<BoardSize>(8);
   const [joinCode, setJoinCode] = useState('');
   const [showHints, setShowHints] = useState(true);
   const [tapMessage, setTapMessage] = useState('none');
@@ -134,8 +136,10 @@ export default function OnlinePage() {
             </p>
           )}
 
+          <SizePicker selected={selectedSize} onSelect={setSelectedSize} />
+
           <button
-            onClick={createRoom}
+            onClick={() => createRoom(selectedSize)}
             disabled={connStatus === 'connecting' || connStatus === 'init'}
             className="flex w-full items-center justify-between rounded-[1.35rem] bg-cell-bg px-5 py-4 text-left text-text-light shadow-[0_14px_40px_rgba(0,0,0,0.28)] ring-1 ring-emerald-200/15 transition active:scale-[0.98] active:brightness-95 disabled:opacity-35"
           >

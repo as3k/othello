@@ -2,14 +2,16 @@
 
 import { useReducer, useEffect, useState, useCallback, useRef } from 'react';
 import { tx } from '@instantdb/react';
-import { Position } from '@/lib/game/types';
+import { Position, BoardSize } from '@/lib/game/types';
 import { gameReducer, createInitialState } from '@/lib/game/game-state';
 import { emptyStats, statsFromGameEnd, STATS_ID } from '@/lib/game/stats';
 import { db } from '@/lib/game/online';
 import GameScreen from '@/components/GameScreen';
+import SizePicker from '@/components/SizePicker';
 
 export default function OthelloPage() {
-  const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [boardSize, setBoardSize] = useState<BoardSize | null>(null);
+  const [state, dispatch] = useReducer(gameReducer, null, () => createInitialState(8));
   const [showHints, setShowHints] = useState(true);
 
   // ── Coin-flip avalanche animation ──
@@ -107,6 +109,26 @@ export default function OthelloPage() {
   };
 
   const gameOver = state.status !== 'playing';
+
+  if (!boardSize) {
+    return (
+      <div className="fixed inset-0 bg-board-bg flex flex-col items-center justify-center select-none px-6">
+        <SizePicker
+          selected={8}
+          onSelect={(size) => {
+            setBoardSize(size);
+            dispatch({ type: 'SET_STATE', state: createInitialState(size) });
+          }}
+        />
+        <button
+          onClick={() => window.location.href = '/'}
+          className="mt-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-text-light/35 active:bg-white/[0.06]"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <GameScreen

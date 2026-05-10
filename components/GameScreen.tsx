@@ -129,6 +129,7 @@ export default function GameScreen({
 
       <Board
         board={displayState.board}
+        boardSize={displayState.boardSize}
         validMoves={isPreviewing ? [] : validMoves}
         lastMove={displayState.lastMove?.position ?? null}
         gameOver={gameOver || isPreviewing}

@@ -2,7 +2,7 @@
 // Pure reducer. Easy to extend: add action types for undo,
 // load-from-storage, apply-remote-move, restart, etc.
 
-import { Board, Player, GameState, GameStatus, Position, Move } from './types';
+import { Board, Player, GameState, GameStatus, Position, Move, BoardSize } from './types';
 import {
   createBoard,
   countDisks,
@@ -22,13 +22,14 @@ export type GameAction =
 
 // ─── Helpers ─────────────────────────────────────────────
 
-function createInitialState(): GameState {
-  const board = createBoard();
+function createInitialState(boardSize: BoardSize = 8): GameState {
+  const board = createBoard(boardSize);
   const currentPlayer: Player = 1;
   const validMoves = getValidMoves(board, currentPlayer);
   const [blackScore, whiteScore] = countDisks(board);
   return {
     board,
+    boardSize,
     currentPlayer,
     status: 'playing',
     moveHistory: [],
@@ -59,7 +60,7 @@ function advanceTurn(board: Board, currentPlayer: Player): {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'RESTART':
-      return createInitialState();
+      return createInitialState(state.boardSize);
 
     case 'SET_STATE':
       return action.state;
@@ -115,6 +116,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const [blackScore, whiteScore] = computeScores(newBoard);
 
       return {
+        ...state,
         board: newBoard,
         currentPlayer: nextPlayer,
         status,

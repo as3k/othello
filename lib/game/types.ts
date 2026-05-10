@@ -4,6 +4,8 @@
 /** 0 = empty, 1 = black (first), 2 = white */
 export type CellState = 0 | 1 | 2;
 
+export type BoardSize = 6 | 8 | 10;
+
 /** 8x8 grid. Board[row][col]. Row 0 = top. */
 export type Board = CellState[][];
 
@@ -29,6 +31,7 @@ export type GameStatus =
 
 export interface GameState {
   board: Board;
+  boardSize: BoardSize;
   currentPlayer: Player;
   status: GameStatus;
   moveHistory: Move[];
@@ -37,8 +40,6 @@ export interface GameState {
   whiteScore: number;
   validMoves: Position[];
 }
-
-export const BOARD_SIZE = 8;
 
 export const DIRECTIONS: [number, number][] = [
   [-1, -1], [-1, 0], [-1, 1],

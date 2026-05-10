@@ -6,6 +6,7 @@ import Cell from './Cell';
 
 interface BoardProps {
   board: BoardType;
+  boardSize: number;
   validMoves: Position[];
   lastMove: Position | null;
   gameOver: boolean;
@@ -23,6 +24,7 @@ function randInt(min: number, max: number): number {
 
 export default function Board({
   board,
+  boardSize,
   validMoves,
   lastMove,
   gameOver,
@@ -70,7 +72,13 @@ export default function Board({
             : 'border-board-border'
         }`}
       >
-        <div className="grid grid-cols-8 grid-rows-8 gap-px bg-board-border h-full">
+        <div
+          className="grid gap-px bg-board-border h-full"
+          style={{
+            gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
+            gridTemplateRows: `repeat(${boardSize}, 1fr)`,
+          }}
+        >
           {board.map((row, r) =>
             row.map((cell, c) => {
               const key = `${r},${c}`;

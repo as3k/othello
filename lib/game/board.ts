@@ -1,7 +1,7 @@
 // ─── Pure Board Logic ─────────────────────────────────────
 // No side effects. All functions return new values.
 
-import { Board, CellState, Player, Position, BOARD_SIZE, DIRECTIONS } from './types';
+import { Board, CellState, Player, Position, BoardSize, DIRECTIONS } from './types';
 
 /** Clone a board (avoid mutation). */
 export function cloneBoard(board: Board): Board {
@@ -9,23 +9,23 @@ export function cloneBoard(board: Board): Board {
 }
 
 /** Create initial Othello board. */
-export function createBoard(): Board {
-  const b: Board = Array.from({ length: BOARD_SIZE }, () =>
-    Array(BOARD_SIZE).fill(0) as CellState[]
+export function createBoard(size: number = 8): Board {
+  const b: Board = Array.from({ length: size }, () =>
+    Array(size).fill(0) as CellState[]
   );
-  const mid = BOARD_SIZE / 2;
-  b[mid - 1][mid - 1] = 2; // d4 = white
-  b[mid - 1][mid]     = 1; // e4 = black
-  b[mid][mid - 1]     = 1; // d5 = black
-  b[mid][mid]         = 2; // e5 = white
+  const mid = size / 2;
+  b[mid - 1][mid - 1] = 2;
+  b[mid - 1][mid]     = 1;
+  b[mid][mid - 1]     = 1;
+  b[mid][mid]         = 2;
   return b;
 }
 
 /** Count disks per player. */
 export function countDisks(board: Board): [black: number, white: number] {
   let black = 0, white = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[0].length; c++) {
       if (board[r][c] === 1) black++;
       else if (board[r][c] === 2) white++;
     }
@@ -54,8 +54,8 @@ export function getFlippedDisks(
     const candidates: Position[] = [];
 
     while (
-      r >= 0 && r < BOARD_SIZE &&
-      c >= 0 && c < BOARD_SIZE &&
+      r >= 0 && r < board.length &&
+      c >= 0 && c < board[0].length &&
       board[r][c] === opponent
     ) {
       candidates.push({ row: r, col: c });
@@ -65,8 +65,8 @@ export function getFlippedDisks(
 
     // Must end with own disk to sandwich
     if (
-      r >= 0 && r < BOARD_SIZE &&
-      c >= 0 && c < BOARD_SIZE &&
+      r >= 0 && r < board.length &&
+      c >= 0 && c < board[0].length &&
       board[r][c] === player
     ) {
       flipped.push(...candidates);
@@ -89,8 +89,8 @@ export function isValidMove(
 /** Get all valid moves for a player. */
 export function getValidMoves(board: Board, player: Player): Position[] {
   const moves: Position[] = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[0].length; c++) {
       if (isValidMove(board, player, r, c)) {
         moves.push({ row: r, col: c });
       }
@@ -121,8 +121,8 @@ export function placeDisk(
 
 /** Check if a player has any valid move. */
 export function hasAnyValidMove(board: Board, player: Player): boolean {
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[0].length; c++) {
       if (isValidMove(board, player, r, c)) return true;
     }
   }
