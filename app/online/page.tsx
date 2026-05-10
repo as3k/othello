@@ -252,7 +252,6 @@ export default function OnlinePage() {
       showHints={showHints}
       setShowHints={setShowHints}
       validMoves={isAnimating ? [] : isMyTurn ? state.validMoves : []}
-      lastMove={state.lastMove}
       currentPlayer={gameOver ? null : state.currentPlayer}
       gameOver={gameOver}
       statusText={error}

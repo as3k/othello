@@ -118,7 +118,6 @@ export default function OthelloPage() {
       showHints={showHints}
       setShowHints={setShowHints}
       validMoves={isAnimating ? [] : state.validMoves}
-      lastMove={state.lastMove}
       currentPlayer={gameOver ? null : state.currentPlayer}
       gameOver={gameOver}
       onCellClick={handleCellClick}

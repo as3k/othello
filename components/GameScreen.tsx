@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowLeftStartOnRectangleIcon,
   ArrowTopRightOnSquareIcon,
   Bars2Icon,
   ChevronRightIcon,
+  ClockIcon,
   InformationCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import type { GameState, Move, Player, Position } from '@/lib/game/types';
+import { countDisks } from '@/lib/game/board';
 import Board from './Board';
 
 interface GameScreenProps {
@@ -23,7 +25,6 @@ interface GameScreenProps {
   showHints: boolean;
   setShowHints: (fn: (value: boolean) => boolean) => void;
   validMoves: Position[];
-  lastMove: Move | null;
   currentPlayer: Player | null;
   gameOver: boolean;
   statusText?: string | null;
@@ -44,7 +45,6 @@ export default function GameScreen({
   showHints,
   setShowHints,
   validMoves,
-  lastMove,
   currentPlayer,
   gameOver,
   statusText,
@@ -56,8 +56,25 @@ export default function GameScreen({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [previewMoveIndex, setPreviewMoveIndex] = useState<number | null>(null);
 
-  const scoreDiff = state.blackScore - state.whiteScore;
+  const previewMove =
+    previewMoveIndex !== null ? state.moveHistory[previewMoveIndex] : null;
+  const displayState = useMemo(() => {
+    if (!previewMove) return state;
+    const [blackScore, whiteScore] = countDisks(previewMove.boardAfter);
+    return {
+      ...state,
+      board: previewMove.boardAfter,
+      blackScore,
+      whiteScore,
+      lastMove: previewMove,
+      validMoves: [],
+    };
+  }, [previewMove, state]);
+  const isPreviewing = previewMoveIndex !== null && !!previewMove;
+
+  const scoreDiff = displayState.blackScore - displayState.whiteScore;
   const scoreLeader =
     scoreDiff > 0
       ? `Black +${scoreDiff}`
@@ -68,15 +85,23 @@ export default function GameScreen({
   const colorLabel =
     mode === 'online'
       ? `You are ${myPlayer === 1 ? 'Black' : 'White'}`
-      : `${state.currentPlayer === 1 ? 'Black' : 'White'} to move`;
+      : `${displayState.currentPlayer === 1 ? 'Black' : 'White'} to move`;
 
-  const turnLabel = isAnimating
+  const turnLabel = isPreviewing
+    ? `Move ${(previewMoveIndex ?? 0) + 1}`
+    : isAnimating
     ? 'Flipping'
     : mode === 'online'
     ? isMyTurn
       ? 'Your turn'
       : 'Waiting'
     : 'Your turn';
+
+  const formatMove = (move: Move, index: number) => {
+    const col = String.fromCharCode(65 + move.position.col);
+    const row = move.position.row + 1;
+    return `${index + 1}. ${move.player === 1 ? 'Black' : 'White'} ${col}${row}`;
+  };
 
   return (
     <div className="fixed inset-0 bg-board-bg flex items-center justify-center select-none">
@@ -98,13 +123,13 @@ export default function GameScreen({
       </div>
 
       <Board
-        board={state.board}
-        validMoves={validMoves}
-        lastMove={lastMove?.position ?? null}
-        gameOver={gameOver}
-        onCellClick={onCellClick}
+        board={displayState.board}
+        validMoves={isPreviewing ? [] : validMoves}
+        lastMove={displayState.lastMove?.position ?? null}
+        gameOver={gameOver || isPreviewing}
+        onCellClick={isPreviewing ? () => undefined : onCellClick}
         showHints={showHints}
-        currentPlayer={currentPlayer}
+        currentPlayer={isPreviewing ? null : currentPlayer}
         flippingCells={flippingCells}
       />
 
@@ -117,7 +142,7 @@ export default function GameScreen({
             {colorLabel}
             <span
               className={`inline-block h-2.5 w-2.5 rounded-full ${
-                (mode === 'online' ? myPlayer : state.currentPlayer) === 1
+                (mode === 'online' ? myPlayer : displayState.currentPlayer) === 1
                   ? 'bg-gray-900 ring-1 ring-white/20'
                   : 'bg-white ring-1 ring-gray-400'
               }`}
@@ -135,11 +160,23 @@ export default function GameScreen({
       >
         <div className="flex min-w-16 items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
           <span className="h-3.5 w-3.5 rounded-full bg-gray-900 ring-1 ring-white/15" />
-          <span className="text-sm font-black tabular-nums text-text-light">{state.blackScore}</span>
+          <span className="text-sm font-black tabular-nums text-text-light">{displayState.blackScore}</span>
         </div>
 
         <div className="flex flex-col items-center leading-tight">
-          {gameOver ? (
+          {isPreviewing ? (
+            <>
+              <span className="text-xs font-bold text-amber-100">
+                Move {(previewMoveIndex ?? 0) + 1} preview
+              </span>
+              <button
+                onClick={() => setPreviewMoveIndex(null)}
+                className="mt-1 rounded-full bg-white/12 px-3 py-1 text-[11px] font-bold text-text-light active:bg-white/20"
+              >
+                Back to live
+              </button>
+            </>
+          ) : gameOver ? (
             <>
               <span className="text-xs font-bold text-text-light">
                 {statusText ??
@@ -160,14 +197,14 @@ export default function GameScreen({
             <span className="text-xs font-medium text-amber-300 animate-pulse">Passing...</span>
           ) : (
             <>
-              <span className="text-[11px] text-text-light/45">{state.moveHistory.length} moves</span>
+              <span className="text-[11px] text-text-light/45">{displayState.moveHistory.length} moves</span>
               <span className="text-[11px] font-medium text-text-light/55">{scoreLeader}</span>
             </>
           )}
         </div>
 
         <div className="flex min-w-16 items-center justify-end gap-2 rounded-full bg-white/10 px-3 py-1.5">
-          <span className="text-sm font-black tabular-nums text-text-light">{state.whiteScore}</span>
+          <span className="text-sm font-black tabular-nums text-text-light">{displayState.whiteScore}</span>
           <span className="h-3.5 w-3.5 rounded-full bg-white ring-1 ring-gray-400" />
         </div>
       </div>
@@ -189,7 +226,7 @@ export default function GameScreen({
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)' }}
       >
         <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-white/18" />
-        <div className="mx-auto flex max-w-sm flex-col gap-4">
+        <div className="mx-auto flex max-h-[75dvh] max-w-sm flex-col gap-4 overflow-y-auto overscroll-contain pb-1">
           <div className="flex items-start justify-between px-1">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/45">
@@ -199,7 +236,7 @@ export default function GameScreen({
               <p className="mt-1 text-xs text-text-light/42">
                 {mode === 'online'
                   ? `Room ${roomCode ?? '—'} · ${myPlayer === 1 ? 'Black' : 'White'}`
-                  : `${state.moveHistory.length} moves · ${scoreLeader}`}
+                  : `${displayState.moveHistory.length} moves · ${scoreLeader}`}
               </p>
             </div>
             <button
@@ -256,6 +293,58 @@ export default function GameScreen({
               <ChevronRightIcon className="h-5 w-5 text-text-light/25" />
             </button>
           </div>
+
+          {state.moveHistory.length > 0 && (
+            <div className="overflow-hidden rounded-[1.35rem] bg-white/[0.075] ring-1 ring-white/[0.08]">
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-300/10 ring-1 ring-amber-200/10">
+                    <ClockIcon className="h-5 w-5 text-amber-100/65" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold">Move history</span>
+                    <span className="text-xs text-text-light/40">Tap a move to preview the board</span>
+                  </span>
+                </span>
+                {isPreviewing && (
+                  <button
+                    onClick={() => setPreviewMoveIndex(null)}
+                    className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-text-light/65 active:bg-white/15"
+                  >
+                    Live
+                  </button>
+                )}
+              </div>
+              <div className="mx-4 h-px bg-white/[0.07]" />
+              <div className="max-h-48 overflow-y-auto py-1">
+                {state.moveHistory.map((move, index) => {
+                  const active = previewMoveIndex === index;
+                  return (
+                    <button
+                      key={`${index}-${move.position.row}-${move.position.col}`}
+                      onClick={() => {
+                        setPreviewMoveIndex(index);
+                        setSettingsOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between px-4 py-2.5 text-left active:bg-white/[0.06] ${
+                        active ? 'bg-amber-300/10 text-amber-50' : 'text-text-light/72'
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full ${
+                            move.player === 1 ? 'bg-gray-900 ring-1 ring-white/15' : 'bg-white ring-1 ring-gray-400'
+                          }`}
+                        />
+                        <span className="text-sm font-semibold">{formatMove(move, index)}</span>
+                      </span>
+                      <span className="text-xs text-text-light/35">+{move.flipped.length}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => setConfirmLeaveOpen(true)}
