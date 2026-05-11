@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+
 import {
   ArrowLeftIcon,
   ArrowRightOnRectangleIcon,
@@ -17,14 +17,6 @@ import SizePicker from '@/components/SizePicker';
 import { emptyStats } from '@/lib/game/stats';
 
 export default function OnlinePage() {
-  return (
-    <Suspense>
-      <OnlinePageInner />
-    </Suspense>
-  );
-}
-
-function OnlinePageInner() {
   const {
     phase,
     roomCode,
@@ -44,7 +36,6 @@ function OnlinePageInner() {
     debug,
   } = useOnlineGame();
 
-  const searchParams = useSearchParams();
   const [selectedSize, setSelectedSize] = useState<BoardSize>(8);
   const [joinCode, setJoinCode] = useState('');
   const [showHints, setShowHints] = useState(true);
@@ -57,14 +48,18 @@ function OnlinePageInner() {
   const chat = useChat({ gameId, playerId, enabled: onlineActive });
   const buzzer = useBuzzer({ gameId, playerId, enabled: onlineActive });
 
-  // Auto-join from URL param ?join=CODE
+  // Auto-join from URL param ?join=CODE (runs once on mount)
+  const autoJoinRef = useRef(false);
   useEffect(() => {
-    const code = searchParams.get('join');
-    if (code && code.length >= 4 && phase === 'idle') {
+    if (autoJoinRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('join');
+    if (code && code.length >= 4) {
+      autoJoinRef.current = true;
       setJoinCode(code.toUpperCase());
       joinRoom(code);
     }
-  }, [searchParams, joinRoom, phase]);
+  }, [joinRoom]);
 
   const shareRoom = async () => {
     const url = `${window.location.origin}/games/${roomCode}`;
