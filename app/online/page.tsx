@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeftIcon,
   ArrowRightOnRectangleIcon,
   PlusIcon,
+  ShareIcon,
 } from '@heroicons/react/24/outline';
 import type { Position, Move, BoardSize } from '@/lib/game/types';
 import { useOnlineGame, db } from '@/lib/game/online';
@@ -15,6 +17,14 @@ import SizePicker from '@/components/SizePicker';
 import { emptyStats } from '@/lib/game/stats';
 
 export default function OnlinePage() {
+  return (
+    <Suspense>
+      <OnlinePageInner />
+    </Suspense>
+  );
+}
+
+function OnlinePageInner() {
   const {
     phase,
     roomCode,
@@ -34,6 +44,7 @@ export default function OnlinePage() {
     debug,
   } = useOnlineGame();
 
+  const searchParams = useSearchParams();
   const [selectedSize, setSelectedSize] = useState<BoardSize>(8);
   const [joinCode, setJoinCode] = useState('');
   const [showHints, setShowHints] = useState(true);
@@ -45,6 +56,24 @@ export default function OnlinePage() {
   const onlineActive = phase === 'playing' || phase === 'finished';
   const chat = useChat({ gameId, playerId, enabled: onlineActive });
   const buzzer = useBuzzer({ gameId, playerId, enabled: onlineActive });
+
+  // Auto-join from URL param ?join=CODE
+  useEffect(() => {
+    const code = searchParams.get('join');
+    if (code && code.length >= 4 && phase === 'idle') {
+      setJoinCode(code.toUpperCase());
+      joinRoom(code);
+    }
+  }, [searchParams, joinRoom, phase]);
+
+  const shareRoom = async () => {
+    const url = `${window.location.origin}/games/${roomCode}`;
+    if (navigator.share) {
+      await navigator.share({ title: 'Join my Othello game', text: `Play Othello with me! Room code: ${roomCode}`, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
+  };
 
   useEffect(() => {
     if (connStatus === 'connecting' || connStatus === 'opening') {
@@ -227,10 +256,17 @@ export default function OnlinePage() {
 
           {roomCode && (
             <div>
-              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-text-light/35">Share code</p>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-text-light/35">Room code</p>
               <p className="text-5xl font-black tracking-[0.22em] text-text-light drop-shadow-[0_8px_34px_rgba(0,0,0,0.55)]">
                 {roomCode}
               </p>
+              <button
+                onClick={shareRoom}
+                className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-text-light/65 ring-1 ring-white/10 active:bg-white/15 active:scale-95"
+              >
+                <ShareIcon className="h-3.5 w-3.5" />
+                Share invite link
+              </button>
             </div>
           )}
 
