@@ -5,20 +5,37 @@ import {
   ArrowLeftStartOnRectangleIcon,
   ArrowTopRightOnSquareIcon,
   Bars2Icon,
+  BellIcon,
+  ChatBubbleBottomCenterIcon,
   ChevronRightIcon,
   ClockIcon,
   InformationCircleIcon,
+  PaperAirplaneIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import type { GameState, Move, Player, Position } from '@/lib/game/types';
+import type { ChatMessage } from '@/lib/chat/useChat';
 import { countDisks } from '@/lib/game/board';
 import Board from './Board';
+
+interface BuzzerControls {
+  sendBuzz: () => void;
+  buzzing: boolean;
+}
+
+interface ChatControls {
+  messages: ChatMessage[];
+  unread: number;
+  sendMessage: (text: string) => void;
+  markRead: () => void;
+}
 
 interface GameScreenProps {
   mode: 'local' | 'online';
   roomCode?: string | null;
   state: GameState;
   myPlayer?: Player | null;
+  playerId?: string;
   isMyTurn: boolean;
   isAnimating: boolean;
   flippingCells: string[] | null;
@@ -28,6 +45,8 @@ interface GameScreenProps {
   currentPlayer: Player | null;
   gameOver: boolean;
   statusText?: string | null;
+  buzzer?: BuzzerControls;
+  chat?: ChatControls;
   debugNode?: React.ReactNode;
   onCellClick: (pos: Position) => void;
   onRestart: () => void;
@@ -39,6 +58,7 @@ export default function GameScreen({
   roomCode,
   state,
   myPlayer,
+  playerId,
   isMyTurn,
   isAnimating,
   flippingCells,
@@ -48,6 +68,8 @@ export default function GameScreen({
   currentPlayer,
   gameOver,
   statusText,
+  buzzer,
+  chat,
   debugNode,
   onCellClick,
   onRestart,
@@ -57,6 +79,8 @@ export default function GameScreen({
   const [aboutOpen, setAboutOpen] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
   const [previewMoveIndex, setPreviewMoveIndex] = useState<number | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
 
   const previewMove =
     previewMoveIndex !== null ? state.moveHistory[previewMoveIndex] : null;
@@ -118,13 +142,32 @@ export default function GameScreen({
         <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold tracking-[0.18em] text-text-light/65">
           {mode === 'online' ? roomCode ?? 'ONLINE' : 'LOCAL'}
         </div>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.09] text-text-light/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 active:scale-95 active:bg-white/15"
-          aria-label="Open menu"
-        >
-          <Bars2Icon className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {chat && (
+            <button
+              onClick={() => {
+                setChatOpen((v) => !v);
+                if (!chatOpen) chat.markRead();
+              }}
+              className="relative grid h-9 w-9 place-items-center rounded-full bg-white/[0.09] text-text-light/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 active:scale-95 active:bg-white/15"
+              aria-label="Toggle chat"
+            >
+              <ChatBubbleBottomCenterIcon className="h-5 w-5" />
+              {chat.unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-amber-500 px-1 text-[9px] font-black leading-none text-white shadow-lg">
+                  {chat.unread > 9 ? '9+' : chat.unread}
+                </span>
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.09] text-text-light/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 active:scale-95 active:bg-white/15"
+            aria-label="Open menu"
+          >
+            <Bars2Icon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <Board
@@ -141,7 +184,7 @@ export default function GameScreen({
 
       {!gameOver && (
         <div
-          className="absolute left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/35 px-3 py-1 text-[11px] font-medium tracking-wide text-text-light/65 backdrop-blur-sm ring-1 ring-white/10"
+          className="absolute left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/35 px-3 py-1 text-[11px] font-medium tracking-wide text-text-light/65 backdrop-blur-sm ring-1 ring-white/10"
           style={{ top: 'calc(50% + 46vmin + 0.75rem)' }}
         >
           <span className="inline-flex items-center gap-1.5">
@@ -156,6 +199,19 @@ export default function GameScreen({
             <span className="text-text-light/25">·</span>
             {turnLabel}
           </span>
+          {buzzer && mode === 'online' && (
+            <button
+              onClick={buzzer.sendBuzz}
+              className={`grid h-6 w-6 place-items-center rounded-full transition-all active:scale-90 ${
+                buzzer.buzzing
+                  ? 'bg-amber-400/30 text-amber-200 ring-2 ring-amber-300/40 scale-110'
+                  : 'text-text-light/40 hover:text-text-light/70'
+              }`}
+              aria-label="Buzz opponent"
+            >
+              <BellIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -442,6 +498,99 @@ export default function GameScreen({
             </a>
           </div>
         </div>
+      )}
+
+      {/* Chat panel */}
+      {chat && (
+        <>
+          <button
+            className={`absolute inset-0 z-30 transition-[opacity,backdrop-filter] duration-300 ease-out ${
+              chatOpen
+                ? 'pointer-events-auto opacity-100 backdrop-blur-sm'
+                : 'pointer-events-none opacity-0 backdrop-blur-0'
+            }`}
+            aria-label="Close chat"
+            onClick={() => {
+              setChatOpen(false);
+              chat.markRead();
+            }}
+          />
+          <div
+            className={`absolute bottom-0 left-0 right-0 z-40 rounded-t-[2rem] bg-[linear-gradient(180deg,rgba(19,52,41,0.98),rgba(7,27,21,0.98))] px-4 pb-6 pt-3 text-text-light shadow-[0_-24px_80px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-2xl transition-transform duration-300 ease-out ${
+              chatOpen ? 'translate-y-0' : 'translate-y-full'
+            }`}
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)', maxHeight: '65dvh' }}
+          >
+            <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-white/18" />
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-sm font-black tracking-wide">Game chat</h3>
+              <button
+                onClick={() => {
+                  setChatOpen(false);
+                  chat.markRead();
+                }}
+                className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] text-text-light/55 ring-1 ring-white/10 active:bg-white/14"
+                aria-label="Close chat"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-2 flex max-h-[calc(65dvh-9rem)] min-h-[15dvh] flex-col overflow-y-auto overscroll-contain rounded-[1.25rem] bg-black/18 p-3 ring-1 ring-white/[0.06]">
+              {chat.messages.length === 0 ? (
+                <p className="m-auto text-xs text-text-light/30">No messages yet</p>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {chat.messages.map((msg, i) => {
+                    const isMe = msg.from === playerId;
+                    return (
+                      <div
+                        key={`${msg.ts}-${i}`}
+                        className={`flex max-w-[85%] flex-col rounded-2xl px-3 py-1.5 text-sm leading-relaxed ${
+                          isMe
+                            ? 'self-end bg-emerald-400/15 text-emerald-50'
+                            : 'self-start bg-white/[0.08] text-text-light/85'
+                        }`}
+                      >
+                        <span className="text-[10px] font-semibold tracking-wide opacity-50">
+                          {isMe ? 'You' : 'Opponent'}
+                        </span>
+                        {msg.text}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!chatInput.trim()) return;
+                chat.sendMessage(chatInput);
+                setChatInput('');
+              }}
+              className="mt-2 flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Type a message…"
+                maxLength={200}
+                className="min-w-0 flex-1 rounded-2xl bg-black/18 px-4 py-2.5 text-sm text-text-light placeholder:text-text-light/25 ring-1 ring-white/[0.08] focus:outline-none focus:ring-emerald-200/25"
+              />
+              <button
+                type="submit"
+                disabled={!chatInput.trim()}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-400/15 text-emerald-100 ring-1 ring-emerald-200/15 active:bg-emerald-400/25 disabled:opacity-30"
+                aria-label="Send message"
+              >
+                <PaperAirplaneIcon className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </>
       )}
 
       {debugNode}

@@ -183,7 +183,7 @@ export function useOnlineGame() {
       setPhase('idle');
     }
 
-    if (gameDoc.status === 'playing' && phase === 'waiting') setPhase('playing');
+    if (gameDoc.status === 'playing' && phase !== 'idle') setPhase('playing');
     if (gameDoc.status !== 'waiting' && gameDoc.status !== 'playing') setPhase('finished');
 
     // Record stats once per game. Let black player write stats to avoid double-counting.
@@ -474,6 +474,7 @@ export function useOnlineGame() {
 
     const newState = createInitialState(current.state.boardSize);
     dispatch({ type: 'SET_STATE', state: newState });
+    setPhase('playing');
     (db as any).transact(
       tx.games[current.id].merge({
         state: newState,
@@ -510,6 +511,8 @@ export function useOnlineGame() {
     error,
     myPlayer,
     opponentId,
+    gameId: gameUUID,
+    playerId: typeof window === 'undefined' ? '' : getPlayerId(),
     state: gameDoc?.state ?? localState,
     globalStats: globalStats ?? emptyStats(),
     debug: {

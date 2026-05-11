@@ -8,6 +8,8 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Position, Move, BoardSize } from '@/lib/game/types';
 import { useOnlineGame, db } from '@/lib/game/online';
+import { useChat } from '@/lib/chat/useChat';
+import { useBuzzer } from '@/lib/chat/useBuzzer';
 import GameScreen from '@/components/GameScreen';
 import SizePicker from '@/components/SizePicker';
 import { emptyStats } from '@/lib/game/stats';
@@ -18,6 +20,9 @@ export default function OnlinePage() {
     roomCode,
     error,
     myPlayer,
+    playerId,
+    gameId,
+    opponentId,
     state,
     globalStats,
     createRoom,
@@ -36,6 +41,10 @@ export default function OnlinePage() {
   const connStatus: string = (db as any).useConnectionStatus?.() ?? 'connecting';
   const [connTimeout, setConnTimeout] = useState(false);
   const showDebug = process.env.NODE_ENV === 'development';
+
+  const onlineActive = phase === 'playing' || phase === 'finished';
+  const chat = useChat({ gameId, playerId, enabled: onlineActive });
+  const buzzer = useBuzzer({ gameId, playerId, enabled: onlineActive });
 
   useEffect(() => {
     if (connStatus === 'connecting' || connStatus === 'opening') {
@@ -259,6 +268,9 @@ export default function OnlinePage() {
       currentPlayer={gameOver ? null : state.currentPlayer}
       gameOver={gameOver}
       statusText={error}
+      playerId={playerId}
+      buzzer={buzzer}
+      chat={chat}
       onCellClick={handleCellClick}
       onRestart={restart}
       onLeave={leave}
